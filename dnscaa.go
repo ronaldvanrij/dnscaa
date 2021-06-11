@@ -9,17 +9,19 @@ import (
 	"github.com/miekg/dns"
 )
 
-var defaultResolver = NewResolver()
+var defaultResolver = NewResolver("8.8.8.8:53")
 
 // Resolver represents a DNS resolver that can be used to lookup the CAA records.
 type Resolver struct {
-	dnsClient *dns.Client
+	dnsClient  *dns.Client
+	dnsAddress string
 }
 
 // NewResolver constructs a new DNS resolver with an underlying DNS client.
-func NewResolver() *Resolver {
+func NewResolver(dnsAddress string) *Resolver {
 	r := new(Resolver)
 	r.dnsClient = &dns.Client{}
+	r.dnsAddress = dnsAddress
 	return r
 }
 
@@ -93,7 +95,7 @@ func (r *Resolver) LookupCAA(name string) ([]*dns.CAA, error) {
 	msg := new(dns.Msg)
 	msg.SetQuestion(dns.Fqdn(name), dns.TypeCAA)
 
-	rsp, _, err := r.dnsClient.Exchange(msg, "8.8.8.8:53")
+	rsp, _, err := r.dnsClient.Exchange(msg, r.dnsAddress)
 	if err != nil {
 		log.Println("CAA lookup failed", name, err)
 		return nil, err
